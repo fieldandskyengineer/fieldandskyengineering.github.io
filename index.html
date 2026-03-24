@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Field and Sky Engineering</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:        #0e0f0f;
+      --paper:      #f5f0e8;
+      --warm-white: #faf7f2;
+      --copper:     #b87333;
+      --copper-light: #d4924a;
+      --slate:      #2c3440;
+      --muted:      #7a7468;
+      --rule:       #d4b896;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background-color: var(--ink);
+      color: var(--paper);
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-weight: 300;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE TEXTURE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    /* ── LAYOUT ── */
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 2.5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    section { padding: 6rem 0; }
+    section + section { border-top: 1px solid rgba(212,184,150,0.15); }
+
+    /* ── TYPOGRAPHY ── */
+    .display {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+    }
+
+    .mono {
+      font-family: 'IBM Plex Mono', monospace;
+      font-weight: 400;
+    }
+
+    h1, h2, h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      letter-spacing: 0.01em;
+    }
+
+    h1 { font-size: clamp(2.8rem, 6vw, 4.8rem); line-height: 1.05; }
+    h2 { font-size: clamp(1.9rem, 4vw, 2.8rem); line-height: 1.15; margin-bottom: 2rem; }
+    h3 { font-size: 1.5rem; margin-bottom: 0.75rem; color: var(--warm-white); }
+
+    p { color: rgba(245,240,232,0.78); margin-bottom: 1.2rem; font-size: 1.02rem; }
+    p:last-child { margin-bottom: 0; }
+
+    .copper { color: var(--copper-light); }
+    .muted { color: var(--muted); font-size: 0.88rem; }
+
+    /* ── RULE ── */
+    .rule {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .rule::before {
+      content: '';
+      display: block;
+      width: 2.5rem;
+      height: 1px;
+      background: var(--copper);
+    }
+    .rule-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--copper);
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 1.4rem 2.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(to bottom, rgba(14,15,15,0.95) 0%, transparent 100%);
+      backdrop-filter: blur(4px);
+    }
+
+    .nav-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      color: var(--paper);
+      text-decoration: none;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2.5rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(245,240,232,0.55);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--copper-light); }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 8rem 0 5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #hero::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--copper), transparent);
+    }
+
+    .hero-eyebrow {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--copper);
+      margin-bottom: 1.5rem;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 0.2s forwards;
+    }
+
+    .hero-title {
+      opacity: 0;
+      animation: fadeUp 0.9s ease 0.4s forwards;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-title em {
+      font-style: italic;
+      color: rgba(245,240,232,0.6);
+    }
+
+    .hero-sub {
+      font-size: 1.15rem;
+      color: rgba(245,240,232,0.65);
+      max-width: 580px;
+      opacity: 0;
+      animation: fadeUp 0.9s ease 0.6s forwards;
+      margin-bottom: 2.5rem;
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-weight: 300;
+      line-height: 1.75;
+    }
+
+    .hero-cta {
+      display: inline-block;
+      padding: 0.85rem 2.2rem;
+      border: 1px solid var(--copper);
+      color: var(--copper-light);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: background 0.25s, color 0.25s;
+      opacity: 0;
+      animation: fadeUp 0.9s ease 0.8s forwards;
+    }
+
+    .hero-cta:hover {
+      background: var(--copper);
+      color: var(--ink);
+    }
+
+    /* large background text */
+    .hero-bg-text {
+      position: absolute;
+      right: -1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(8rem, 18vw, 16rem);
+      font-weight: 300;
+      color: rgba(184,115,51,0.04);
+      letter-spacing: -0.02em;
+      pointer-events: none;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    /* ── SERVICES ── */
+    .service-grid {
+      display: grid;
+      gap: 3rem;
+      margin-top: 3.5rem;
+    }
+
+    .service-card {
+      padding: 2.5rem;
+      border: 1px solid rgba(212,184,150,0.12);
+      position: relative;
+      transition: border-color 0.3s;
+    }
+
+    .service-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3rem;
+      height: 2px;
+      background: var(--copper);
+      transition: width 0.4s ease;
+    }
+
+    .service-card:hover { border-color: rgba(212,184,150,0.28); }
+    .service-card:hover::before { width: 100%; }
+
+    .service-number {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.2em;
+      color: var(--copper);
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    /* ── BOUNDARY SECTION ── */
+    #boundary {
+      background: rgba(184,115,51,0.04);
+      border-radius: 0;
+    }
+
+    .boundary-box {
+      border: 1px solid rgba(184,115,51,0.2);
+      padding: 2.5rem 3rem;
+      position: relative;
+    }
+
+    .boundary-box::before {
+      content: 'SCOPE DEFINITION';
+      position: absolute;
+      top: -0.6rem;
+      left: 2rem;
+      background: var(--ink);
+      padding: 0 0.75rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: var(--copper);
+    }
+
+    .boundary-box p {
+      font-size: 1.08rem;
+      line-height: 1.85;
+      color: rgba(245,240,232,0.82);
+    }
+
+    .boundary-box strong {
+      color: var(--warm-white);
+      font-weight: 500;
+    }
+
+    /* ── COVERAGE ── */
+    .coverage-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 2.5rem;
+    }
+
+    .coverage-tag {
+      padding: 0.6rem 1.4rem;
+      border: 1px solid rgba(212,184,150,0.2);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.78rem;
+      letter-spacing: 0.1em;
+      color: rgba(245,240,232,0.65);
+    }
+
+    /* ── ABOUT ── */
+    .credentials {
+      margin-top: 2rem;
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .credential-item {
+      display: flex;
+      gap: 1rem;
+      align-items: baseline;
+    }
+
+    .credential-item::before {
+      content: '—';
+      color: var(--copper);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.8rem;
+      flex-shrink: 0;
+    }
+
+    .credential-item span {
+      font-size: 0.97rem;
+      color: rgba(245,240,232,0.72);
+    }
+
+    /* ── CONTACT ── */
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      margin-top: 3rem;
+    }
+
+    @media (max-width: 640px) {
+      .contact-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+      .nav-links { display: none; }
+    }
+
+    .contact-info { display: flex; flex-direction: column; gap: 1.5rem; }
+
+    .contact-method {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .contact-method-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--copper);
+    }
+
+    .contact-method a, .contact-method span {
+      color: rgba(245,240,232,0.75);
+      text-decoration: none;
+      font-size: 0.97rem;
+      transition: color 0.2s;
+    }
+
+    .contact-method a:hover { color: var(--copper-light); }
+
+    /* FORM */
+    .contact-form { display: flex; flex-direction: column; gap: 1.2rem; }
+
+    .form-field { display: flex; flex-direction: column; gap: 0.4rem; }
+
+    .form-field label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--copper);
+    }
+
+    .form-field input,
+    .form-field textarea {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(212,184,150,0.18);
+      color: var(--paper);
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-weight: 300;
+      font-size: 0.95rem;
+      padding: 0.75rem 1rem;
+      transition: border-color 0.25s;
+      outline: none;
+      resize: vertical;
+    }
+
+    .form-field input:focus,
+    .form-field textarea:focus { border-color: var(--copper); }
+
+    .form-field textarea { min-height: 120px; }
+
+    .form-submit {
+      padding: 0.85rem 2rem;
+      background: transparent;
+      border: 1px solid var(--copper);
+      color: var(--copper-light);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.25s, color 0.25s;
+      align-self: flex-start;
+    }
+
+    .form-submit:hover { background: var(--copper); color: var(--ink); }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 3rem 0;
+      border-top: 1px solid rgba(212,184,150,0.12);
+      position: relative;
+      z-index: 1;
+    }
+
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .footer-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem;
+      letter-spacing: 0.06em;
+      color: rgba(245,240,232,0.4);
+    }
+
+    .footer-copy {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      color: rgba(245,240,232,0.25);
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-in {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Fallback: if JS doesn't fire, show everything */
+    @media (prefers-reduced-motion: reduce) {
+      .fade-in { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="#hero" class="nav-logo">Field &amp; Sky Engineering</a>
+    <ul class="nav-links">
+      <li><a href="#services">Services</a></li>
+      <li><a href="#coverage">Coverage</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="container">
+      <div class="hero-eyebrow">Independent Electrical Assessment</div>
+      <h1 class="hero-title display">
+        Field &amp; Sky<br/>
+        <em>Engineering</em>
+      </h1>
+      <p class="hero-sub">
+        Specialized electrical assessment services for industrial, commercial, and institutional facilities.
+        Clear findings. Honest recommendations.
+      </p>
+      <a href="#contact" class="hero-cta">Discuss a Project</a>
+    </div>
+    <div class="hero-bg-text">F&amp;S</div>
+  </section>
+
+  <!-- SERVICES -->
+  <section id="services">
+    <div class="container">
+      <div class="rule fade-in"><span class="rule-label">What We Do</span></div>
+      <h2 class="display fade-in">Assessment &amp; Study Services</h2>
+      <p class="fade-in" style="max-width:600px;">
+        We provide specialized electrical study and assessment services for facilities that need
+        thorough, expert analysis from an experienced independent engineer.
+      </p>
+
+      <div class="service-grid">
+
+        <div class="service-card fade-in">
+          <span class="service-number">01</span>
+          <h3>Hazardous Area Classification</h3>
+          <p>
+            Facilities change. Documentation doesn't always keep up. We provide thorough NEC 500/505
+            and NFPA 70 hazardous area classification studies — reviewing process documentation,
+            evaluating existing classifications, and delivering a complete report with clear,
+            actionable findings. Whether you need an initial classification, a reclassification
+            following process changes, or an independent review of existing documentation, we
+            provide the rigorous analysis your facility requires.
+          </p>
+        </div>
+
+        <div class="service-card fade-in">
+          <span class="service-number">02</span>
+          <h3>Grounding &amp; Lighting Studies</h3>
+          <p>
+            Grounding systems are foundational to electrical safety — and frequently underexamined
+            until something goes wrong. We assess grounding systems and lighting installations for
+            industrial and commercial facilities, evaluating existing conditions against applicable
+            standards and delivering thorough, clearly documented findings.
+          </p>
+        </div>
+
+        <div class="service-card fade-in">
+          <span class="service-number">03</span>
+          <h3>Electrical Condition Assessments</h3>
+          <p>
+            Aging infrastructure, deferred maintenance, unfamiliar inherited systems — electrical
+            condition assessments give facility owners and operators an expert picture of
+            electrical system health. We document existing conditions, identify concerns, and
+            provide prioritized findings you can act on, share with stakeholders, or use
+            as the basis for future planning. On your timeline.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- COVERAGE -->
+  <section id="coverage">
+    <div class="container">
+      <div class="rule fade-in"><span class="rule-label">Where We Work</span></div>
+      <h2 class="display fade-in">Geographic Coverage</h2>
+      <p class="fade-in" style="max-width:580px;">
+        We serve clients across Alaska, the Pacific Northwest, California, Colorado, Northern Canada,
+        the Pacific Rim, and internationally. The majority of our work is conducted remotely; site visits are scheduled
+        as the engagement requires.
+      </p>
+      <div class="coverage-list fade-in">
+        <div class="coverage-tag">Alaska</div>
+        <div class="coverage-tag">Pacific Northwest</div>
+        <div class="coverage-tag">California</div>
+        <div class="coverage-tag">Colorado / Denver</div>
+        <div class="coverage-tag">Northern Canada</div>
+        <div class="coverage-tag">Pacific Rim</div>
+        <div class="coverage-tag">Taiwan &amp; Japan</div>
+        <div class="coverage-tag">International</div>
+        <div class="coverage-tag">Remote Engagements Considered</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about">
+    <div class="container">
+      <div class="rule fade-in"><span class="rule-label">About the Firm</span></div>
+      <h2 class="display fade-in">Credentials &amp; Experience</h2>
+      <p class="fade-in" style="max-width:620px;">
+        Field &amp; Sky Engineering is a specialized independent consulting firm providing
+        electrical assessment services to industrial, commercial, institutional, and utility
+        clients. Our principal engineer brings deep technical experience and the professional
+        judgment that comes from two decades in complex electrical environments.
+      </p>
+
+      <div class="credentials fade-in">
+        <div class="credential-item"><span>Licensed Professional Engineer (PE)</span></div>
+        <div class="credential-item"><span>20+ years of power systems experience</span></div>
+        <div class="credential-item"><span>Extensive background in industrial, healthcare, military, and utility environments</span></div>
+        <div class="credential-item"><span>Deep experience across Alaska's unique infrastructure landscape</span></div>
+        <div class="credential-item"><span>Specialized expertise in protection engineering and power systems analysis</span></div>
+        <div class="credential-item"><span>Remote-first practice with on-site capability throughout the service area</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="container">
+      <div class="rule fade-in"><span class="rule-label">Get in Touch</span></div>
+      <h2 class="display fade-in">Start a Conversation</h2>
+      <p class="fade-in" style="max-width:520px;">
+        Have a facility that needs a classification review, grounding assessment, or
+        condition evaluation? We'd like to hear about it.
+      </p>
+
+      <div class="contact-grid">
+
+        <div class="contact-info fade-in">
+          <div class="contact-method">
+            <span class="contact-method-label">Email</span>
+            <a href="/cdn-cgi/l/email-protection#70191e161f301619151c14111e14031b09151e17191e151502191e175e131f1d"><span class="__cf_email__" data-cfemail="40292e262f002629252c24212e24332b39252e27292e252532292e276e232f2d">[email&#160;protected]</span></a>
+          </div>
+          <div class="contact-method">
+            <span class="contact-method-label">Phone</span>
+            <a href="tel:+19075550000">(907) 555-0000</a>
+          </div>
+          <div class="contact-method">
+            <span class="contact-method-label">LinkedIn</span>
+            <a href="#" target="_blank" rel="noopener">Field &amp; Sky Engineering</a>
+          </div>
+          <div class="contact-method" style="margin-top:1rem;">
+            <span class="contact-method-label">Response Time</span>
+            <span>We respond to all inquiries within one business day.</span>
+          </div>
+        </div>
+
+        <form class="contact-form fade-in" onsubmit="return false;">
+          <div class="form-field">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" autocomplete="name" />
+          </div>
+          <div class="form-field">
+            <label for="org">Organization</label>
+            <input type="text" id="org" name="org" />
+          </div>
+          <div class="form-field">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" autocomplete="email" />
+          </div>
+          <div class="form-field">
+            <label for="message">Project Description</label>
+            <textarea id="message" name="message" placeholder="Brief description of facility, location, and what you need assessed."></textarea>
+          </div>
+          <button type="submit" class="form-submit">Send Inquiry</button>
+        </form>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-logo">Field &amp; Sky Engineering</div>
+        <div class="footer-copy">&copy; 2026 Field &amp; Sky Engineering &nbsp;·&nbsp; Independent Electrical Assessment &nbsp;·&nbsp; Assessment and study services only; design and construction services are outside our scope.</div>
+      </div>
+    </div>
+  </footer>
+
+    <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("visible");
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0, rootMargin: "0px 0px -40px 0px" });
+
+    document.querySelectorAll(".fade-in").forEach(el => observer.observe(el));
+
+    setTimeout(() => {
+      document.querySelectorAll(".fade-in").forEach(el => {
+        const rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight) el.classList.add("visible");
+      });
+    }, 100);
+  </script>
+</body>
+</html>
